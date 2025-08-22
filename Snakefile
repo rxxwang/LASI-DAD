@@ -1,7 +1,7 @@
-dir = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250813_EWAS3/"
+dir = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250822_EWAS4/"
 
 rule all:
-  input: expand(dir + "meth_pheno_data.{chunk}.RDS", chunk = range(1, 101))
+  input: expand(dir + "data/meth_pheno_data.{chunk}.RDS", chunk = range(1, 101))
 
 biomarker_data_file = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/Alzheimers_Disease/Updated LASI-DAD AD biomarker data/lasidad_w12adbio_final_methylID.dta"
 
@@ -21,7 +21,7 @@ rule process_data:
          meth = methylation_data_file, 
          pheno = phenotype_data_file, 
          wbc = blood_cell_data_file
-  output: merged_data = expand(dir + "meth_pheno_data.{chunk}.RDS", chunk = range(1, 101)), 
+  output: merged_data = expand(dir + "data/meth_pheno_data.{chunk}.RDS", chunk = range(1, 101)), 
           cpg_list = dir + "cpg_list.RDS", 
           manifest = dir + "manifest.RDS" 
   script: "1-Data_preprocessing.R"
