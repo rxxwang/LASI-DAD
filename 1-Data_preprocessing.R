@@ -66,13 +66,24 @@ phenos = phenos %>% mutate(ragender = case_when(ragender == "1.Man" ~ 0, ragende
 
 wbc = read.csv(snakemake@input[["wbc"]])
 
-phenos = inner_join(phenos, wbc, by='sample') %>%
-         inner_join(Meth, by = "sample") %>%
-         inner_join(Unmeth, by = "sample")
+phenos = inner_join(phenos, wbc, by='sample') 
 
 # TODO: Find out what is going on with duplicates? Are they the same data twice or different data?
 phenos = phenos[-which(duplicated(phenos$MedGenome_Sample_ID)),]
 
-saveRDS(phenos, file = snakemake@output[["merged_data"]])
+nchunks <- 100
+cpgs_per_chunk <- ceiling(length(keep_cpgs)/nchunks)
+chunk <- rep(1:100, each = cpgs_per_chunk)[1:length(keep_cpgs)]
+
+for(i in 1:100){
+  cpgs_chunk <- keep_cpgs[chunk == i]
+  Meth_chunk <- select(Meth, all_of(c("sample", paste0(cpgs_chunk, "_M")))) 
+  Unmeth_chunk <- select(Unmeth, all_of(c("sample", paste0(cpgs_chunk, "_U")))) 
+  phenos_chunk <- phenos %>%
+         inner_join(Meth_chunk, by = "sample") %>%
+         inner_join(Unmeth_chunk, by = "sample")
+  save(phenos_chunk, file = snakemake@output[["merged_data"]][i])
+}
+
 saveRDS(keep_cpgs, file = snakemake@output[["cpg_list"]])
 saveRDS(manifest_excludeX, file = snakemake@output[["manifest"]])
