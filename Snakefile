@@ -1,7 +1,7 @@
 dir = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250822_EWAS4/"
 
 rule all:
-  input: expand(dir + "data/meth_pheno_data.{chunk}.RDS", chunk = range(1, 101))
+  input: expand(dir + null_model/null_residuals.{chunk}.RDS", chunk = range(1, 101))
 
 biomarker_data_file = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/Alzheimers_Disease/Updated LASI-DAD AD biomarker data/lasidad_w12adbio_final_methylID.dta"
 
@@ -25,3 +25,9 @@ rule process_data:
           cpg_list = dir + "cpg_list.RDS", 
           manifest = dir + "manifest.RDS" 
   script: "1-Data_preprocessing.R"
+
+# Run null model
+rule null_model:
+  input: data = dir + "data/meth_pheno_data.{chunk}.RDS"
+  output: out = dir + "null_model/null_residuals.{chunk}.RDS"
+  script: "2.0-null_model.R"
