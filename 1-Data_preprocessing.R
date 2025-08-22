@@ -71,11 +71,11 @@ phenos = inner_join(phenos, wbc, by='sample')
 # TODO: Find out what is going on with duplicates? Are they the same data twice or different data?
 phenos = phenos[-which(duplicated(phenos$MedGenome_Sample_ID)),]
 
-nchunks <- 100
+nchunks <- snakemake@params[["nchunks"]]
 cpgs_per_chunk <- ceiling(length(keep_cpgs)/nchunks)
-chunk <- rep(1:100, each = cpgs_per_chunk)[1:length(keep_cpgs)]
+chunk <- rep(1:nchunks, each = cpgs_per_chunk)[1:length(keep_cpgs)]
 
-for(i in 1:100){
+for(i in 1:nchunks){
   cpgs_chunk <- keep_cpgs[chunk == i]
   Meth_chunk <- select(Meth, all_of(c("sample", paste0(cpgs_chunk, "_M")))) 
   Unmeth_chunk <- select(Unmeth, all_of(c("sample", paste0(cpgs_chunk, "_U")))) 
