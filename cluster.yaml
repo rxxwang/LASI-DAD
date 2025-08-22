@@ -8,3 +8,7 @@ __default__:
 process_data:
     mem: "1G"
     time: "3:00:00"
+
+null_model:
+    mem: "10G"
+    time: "10:00:00"
