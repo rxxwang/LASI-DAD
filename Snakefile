@@ -1,8 +1,7 @@
-rule all:
-  input:
-
-
 dir = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250813_EWAS3/"
+
+rule all:
+  input: dir + "all_data.RDS"
 
 biomarker_data_file = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/Alzheimers_Disease/Updated LASI-DAD AD biomarker data/lasidad_w12adbio_final_methylID.dta"
 
