@@ -1,7 +1,7 @@
 mkdir -p log
 snakemake \
    --keep-going \
-   --jobs 96 \
+   --jobs 500 \
    --max-jobs-per-second 5 \
    --latency-wait 60 \
    --cluster-config cluster.yaml  \

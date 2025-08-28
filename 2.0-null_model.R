@@ -3,7 +3,7 @@ library(dplyr)
 library(stringr)
 
 lasi <- readRDS(snakemake@input[["data"]])
-cpgs <- str_subset(names(phenos, "_M$")) %>% str_replace("_M$", "")
+cpgs <- str_subset(colnames(lasi, "_M$")) %>% str_replace("_M$", "")
 
 n = length(cpgs)
 residuals = matrix(0, nrow = n, ncol = nrow(lasi))
@@ -14,9 +14,9 @@ for(i in 1:n) {
   
   # TODO: Understand zero methylation/unmethylation values
   
-  Mname <- paste(cpgs[i], "_M")
+  Mname <- paste0(cpgs[i], "_M")
   Uname <- paste0(cpgs[i], "_U")
-  formula <- as.formula(paste0(Mname "~ log(r1hagey) + ragender + smoke + r1hmbmi + CD8T + CD4T + NK + Bcell + Mono + batch + (1 | Plate) + (1 | row) + offset(log(m_u))"))
+  formula <- as.formula(paste0(Mname, "~ log(r1hagey) + ragender + smoke + r1hmbmi + CD8T + CD4T + NK + Bcell + Mono + batch + (1 | Plate) + (1 | row) + offset(log(m_u))"))
   # May use UQ(Mname) instead of !!Mname to unquote
   temp_meth = filter(lasi, !is.na((!!Mname)) & !is.na((!!Uname))) %>%
     mutate(
@@ -25,7 +25,7 @@ for(i in 1:n) {
     )
   
   MODEL = glmmTMB(
-    formula
+    formula,
     data = temp_meth,
     family = Gamma(link = "log")
   )

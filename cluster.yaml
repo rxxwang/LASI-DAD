@@ -1,14 +1,21 @@
 __default__:
-    mem: "1G"
+    mem: "7G"
     cpus: "1"
     name: "{rule}-{wildcards}"
-    log: "log/snake-{rule}-{wildcards}"
+    log: "/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/snake-log/snake-{rule}-{wildcards}"
     time: "2:00:00"
 
 process_data:
-    mem: "1G"
-    time: "3:00:00"
+    mem: "30G"
+    time: "5:00:00"
 
 null_model:
     mem: "10G"
-    time: "10:00:00"
+    time: "20:00:00"
+
+cor_filter:
+    time: "5:00:00"
+
+run_model:
+    mem: "10G"
+    time: "20:00:00"

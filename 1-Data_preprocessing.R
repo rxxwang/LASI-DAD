@@ -82,7 +82,7 @@ for(i in 1:nchunks){
   phenos_chunk <- phenos %>%
          inner_join(Meth_chunk, by = "sample") %>%
          inner_join(Unmeth_chunk, by = "sample")
-  save(phenos_chunk, file = snakemake@output[["merged_data"]][i])
+  saveRDS(phenos_chunk, file = snakemake@output[["merged_data"]][i])
 }
 
 saveRDS(keep_cpgs, file = snakemake@output[["cpg_list"]])
