@@ -75,4 +75,4 @@ rule run_model:
         biomarker = lambda wc: wc.biomarker,
         model = lambda wc: wc.model
     script:
-        lambda wildcards: f"4.{wildcards.model}-EWAS_model{wildcards.model}.R"
+        "4-EWAS_model.R"
