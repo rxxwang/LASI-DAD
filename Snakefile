@@ -2,6 +2,12 @@ dir = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/2025
 nchunks = 500
 cor_threshold = 0.1
 BIOMARKERS = ["w1gfap_final", "w1nfl_final", "w1ptau_final", "w1totaltau_final", "abeta_ratio"]
+
+resources_defaults = {
+    "mem_mb": 7000,   # 7 GB
+    "runtime": 120    # 2 hours
+}
+
 rule all:
     input:
         expand(
@@ -30,12 +36,16 @@ rule process_data:
           cpg_list = dir + "cpg_list.RDS", 
           manifest = dir + "manifest.RDS" 
   params: nchunks = nchunks
+  resources: mem_mb = 30000,   # 30 GB
+             runtime = 300     # 5 hours
   script: "1-Data_preprocessing.R"
 
 # Run null model
 rule null_model:
   input: data = dir + "data/meth_pheno_data.{chunk}.RDS"
   output: out = dir + "null_model/null_residuals.{chunk}.RDS"
+  resources: mem_mb = 10000,   # 10 GB
+             runtime = 2400    # 40 hours
   script: "2.0-null_model.R"
   
 # Combine residuals
@@ -44,6 +54,8 @@ rule combine_res:
          manifest = dir + "manifest.RDS"
   output: residuals = expand(dir + "null_model/null_residuals.chr{chr}.RDS", chr = range(1,23))
   params: nchunks = nchunks
+  resources: mem_mb = 15000,   # 15 GB
+             runtime = 300     # 5 hours
   script: "2.1-combine_res.R"
   
 # Filter correlation residuals
@@ -51,6 +63,8 @@ rule cor_filter:
   input: residuals = dir + "null_model/null_residuals.chr{chr}.RDS"
   output: residuals_filter = dir + "residuals_chr/keep_cpg.{chr}.RDS"
   params: cor_threshold = cor_threshold
+  resources: mem_mb = 7000,    # default 7 GB
+             runtime = 300     # 5 hours
   script: "3.0-cor_filter.R"
 
 # PCA + plotting + table
@@ -74,5 +88,7 @@ rule run_model:
     params:
         biomarker = lambda wc: wc.biomarker,
         model = lambda wc: wc.model
+    resources: mem_mb = 10000,   # 10 GB
+             runtime = 2400    # 40 hours
     script:
         "4-EWAS_model.R"
