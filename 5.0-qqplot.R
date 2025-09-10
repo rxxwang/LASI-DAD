@@ -1,35 +1,22 @@
 library(readr)
+library(dplyr)
 library(ggplot2)
 library(stringr)
 
-setwd("/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250813_EWAS3")
+model = paste0("model",snakemake@params[["model"]])
+biomarker = snakemake@params[["biomarker"]]
 
-args <- commandArgs(trailingOnly = TRUE)
-adbio_n <- as.numeric(args[1])
-model = paste0("model", as.numeric(args[2]))
-
-adbio <- c("w1gfap_final", "w1nfl_final", "w1ptau_final", "w1totaltau_final", "abeta_ratio")
-biomarker = adbio[adbio_n]
-files <- list.files(path = paste0("results_",model),
-                    pattern = paste0("^results_", model, "_", biomarker, ".*\\.Rda$"),
-                    full.names = TRUE)
-length(files)
-results_list <- lapply(files, function(f) {
-  load(f)
-  get(ls()[ls() != "f"])
-})
+nchunks <- snakemake@params[["nchunks"]]
+results_list = list()
+for(i in 1:nchunks){
+  results_list[[i]] <- readRDS(snakemake@input[["data"]][i])
+  print(i)
+}
 combined_result <- do.call(rbind, results_list)
-
+print("finished")
 dim(combined_result)
 
-# qqplot
-if(model == "model3" | model == "model4"){
-  feature = c(paste0("win_",biomarker), "log_age", "gender", "smoke")
-}else if(model == "model5" | model == "model6"){
-  feature = c(paste0("invnorm_",biomarker), "log_age", "gender", "smoke")
-}else{
-  feature = c(paste0("log_",biomarker), "log_age", "gender", "smoke")
-}
+feature = c("biomarker", "age", "gender", "smoke")
 qqplots = list()
 for(i in 1:4){
   variable = feature[i]
@@ -57,7 +44,7 @@ for(i in 1:4){
       label = paste0("lambda == ", round(lambda, 3)),
       parse = TRUE
     )
-  ggsave(qqplots[[i]], file = paste0("qqplot/qqplot_",model, "_",biomarker,"_",variable,".png"), width = 7, height = 5)
+  ggsave(qqplots[[i]], file = snakemake@output[["qqplot"]][i], width = 7, height = 5)
 }
 
 # adjust p
@@ -73,7 +60,7 @@ data = data.frame(CpG = combined_result[,19],
   filter(chr != 0)
 sum(data$p < 5e-8)
 sum(data$p.adj < 0.05)
-save(data, file = paste0("results_", model, "_", biomarker, ".Rda"))
+saveRDS(data, file = snakemake@output[["combined_result"]])
 
 library(GenomicRanges)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)

@@ -2,8 +2,9 @@ library(glmmTMB)
 library(dplyr)
 library(stringr)
 
+# lasi <- readRDS("/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250822_EWAS4/data/meth_pheno_data.1.RDS")
 lasi <- readRDS(snakemake@input[["data"]])
-cpgs <- str_subset(colnames(lasi, "_M$")) %>% str_replace("_M$", "")
+cpgs <- str_subset(colnames(lasi), "_M$") %>% str_replace("_M$", "")
 
 n = length(cpgs)
 residuals = matrix(0, nrow = n, ncol = nrow(lasi))
@@ -21,8 +22,10 @@ for(i in 1:n) {
   temp_meth = filter(lasi, !is.na((!!Mname)) & !is.na((!!Uname))) %>%
     mutate(
       row = factor(as.numeric(substr(Sample_Section, 3, 3))),
-      m_u = !!Mname + !!Uname
-    )
+      m_u = !!sym(Mname) + !!sym(Uname)
+    ) %>% 
+    dplyr::select(MedGenome_Sample_ID, !!Mname, !!Uname, r1hagey, ragender, smoke, r1hmbmi, CD8T, CD4T, NK, Bcell, Mono, batch, Plate, row, m_u) %>%
+    filter(if_all(everything(), ~ !is.na(.)))
   
   MODEL = glmmTMB(
     formula,
@@ -31,11 +34,13 @@ for(i in 1:n) {
   )
   gamma_result = summary(MODEL)
   
+  if(MODEL$fit$convergence != 0) print(paste(i, cpgs[i], "No convergence"))
+  
   residual_gamma = data.frame(res = residuals(MODEL), sample = temp_meth$MedGenome_Sample_ID)
   patients_all = patients %>% left_join(residual_gamma)
   patients_all$res = ifelse(is.na(patients_all$res), 0, patients_all$res)
-  residuals[ifelse(i%%n == 0, n, i%%n),] = as.vector(patients_all$res)
+  residuals[i,] = as.vector(patients_all$res)
 }
-residuals$cpg = cpgs
+residuals = as.data.frame(residuals) %>% mutate(cpg = cpgs)
 saveRDS(residuals, file = snakemake@output[["out"]])
 

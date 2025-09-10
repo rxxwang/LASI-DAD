@@ -6,9 +6,10 @@ library(xtable)
 # Read all filtered residuals file
 results_list = list()
 for(i in 1:22){
+  # results_list[[i]] <- readRDS(paste0("/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250822_EWAS4/residuals_chr/keep_cpg.", i,".RDS"))
   results_list[[i]] <- readRDS(snakemake@input[["residuals_filter"]][i])
 }
-combined_result <- do.call(rbind, results_list)
+combined_result <- do.call(cbind, results_list)
 
 # PCA
 cpg_prune = colnames(combined_result)

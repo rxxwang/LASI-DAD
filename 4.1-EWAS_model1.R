@@ -9,7 +9,7 @@ model1 <- function(model, lasi, manifest, biomarker, pca_result, output_name){
   # manifest = readRDS(snakemake@output[["manifest"]])
   # biomarker = snakemake@params[["biomarker"]]
   
-  cpgs <- str_subset(colnames(lasi, "_M$")) %>% str_replace("_M$", "")
+  cpgs <- str_subset(colnames(lasi), "_M$") %>% str_replace("_M$", "")
   n = length(cpgs)
   results = matrix(0, nrow = n, ncol = 21)
   lasi$abeta_ratio = lasi$w1abeta42_final/lasi$w1abeta40_final
@@ -22,8 +22,10 @@ model1 <- function(model, lasi, manifest, biomarker, pca_result, output_name){
     temp_meth = filter(lasi, !is.na((!!Mname)) & !is.na((!!Uname))) %>%
       mutate(
         row = factor(as.numeric(substr(Sample_Section, 3, 3))),
-        m_u = !!Mname + !!Uname
-      )
+        m_u = !!sym(Mname) + !!sym(Uname)
+      ) %>% 
+      dplyr::select(!!biomarker, !!Mname, !!Uname, r1hagey, ragender, smoke, r1hmbmi, CD8T, CD4T, NK, Bcell, Mono, batch, Plate, row, m_u) %>%
+      filter(if_all(everything(), ~ !is.na(.)))
     
     MODEL = glmmTMB(
       formula,
@@ -31,9 +33,9 @@ model1 <- function(model, lasi, manifest, biomarker, pca_result, output_name){
       family = Gamma(link = "log")
     )
     gamma_result = summary(MODEL)
-    if(is.nan(gamma_result$coefficients$cond[2,4])) print(paste(i, cpg[i], "NaN"))
+    if(is.nan(gamma_result$coefficients$cond[2,4])) print(paste(i, cpgs[i], "NaN"))
     if(i %% 1000 == 0){
-      print(paste(Sys.time(), i, cpg[i]))
+      print(paste(Sys.time(), i, cpgs[i]))
     }
     results[ifelse(i%%n == 0, n, i%%n),] =
       unname(c(gamma_result$coefficients$cond[2,], gamma_result$coefficients$cond[3,],

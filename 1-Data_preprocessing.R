@@ -27,6 +27,7 @@ manifest_excludeX = manifest %>% filter(Chr != 'chrX' & Chr != 'chrY' & Chr != '
   mutate(CPG = sub("_.*", "", CpG)) %>%
   filter(!(CPG %in% HRS_Gap_Probes_v1$CPG))
 
+print(-1)
 
 # loads matrix Meth and Unmeth
 load(snakemake@input[["meth"]])
@@ -38,16 +39,19 @@ samples = colnames(Meth)
 stopifnot(all(rownames(Meth) == rownames(Unmeth)))
 stopifnot(all(colnames(Meth) == colnames(Unmeth)))
 
+print(0)
+
 # TODO: Check that betas derived from Meth and Unmeth match beta2 from Scott
 Meth = t(Meth[keep_meth_ix,])
 Meth = data.frame(sample=samples, Meth, row.names = NULL)
-names(Meth) <- paste0(keep_cpgs, "_M")
+colnames(Meth) <- c("sample", paste0(keep_cpgs, "_M"))
 
 
 Unmeth = t(Unmeth[keep_meth_ix,])
 Unmeth = data.frame(sample=samples, Unmeth, row.names = NULL)
-names(Unmeth) <- paste0(keep_cpgs, "_U")
+colnames(Unmeth) <- c("sample", paste0(keep_cpgs, "_U"))
 
+print(1)
 
 #loads data frame phenos
 load(file=snakemake@input[["pheno"]])
@@ -64,6 +68,8 @@ phenos$smoke = as.factor(
 phenos = phenos %>% mutate(ragender = case_when(ragender == "1.Man" ~ 0, ragender == "2.Woman" ~ 1)) %>%
   inner_join(adbio_meth, by = c("Sample_name"))
 
+print(2)
+
 wbc = read.csv(snakemake@input[["wbc"]])
 
 phenos = inner_join(phenos, wbc, by='sample') 
@@ -74,6 +80,8 @@ phenos = phenos[-which(duplicated(phenos$MedGenome_Sample_ID)),]
 nchunks <- snakemake@params[["nchunks"]]
 cpgs_per_chunk <- ceiling(length(keep_cpgs)/nchunks)
 chunk <- rep(1:nchunks, each = cpgs_per_chunk)[1:length(keep_cpgs)]
+
+print(3)
 
 for(i in 1:nchunks){
   cpgs_chunk <- keep_cpgs[chunk == i]

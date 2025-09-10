@@ -3,8 +3,9 @@ library(psych)
 library(irlba)
 
 data_filtered_chr <- readRDS(snakemake@input[["residuals"]])
-data_filtered_chr = t(as.matrix(data_filtered_chr))
-cpg = colnames(data_filtered_chr)
+cpg = data_filtered_chr$cpg
+data_filtered_chr = t(as.matrix(data_filtered_chr %>% dplyr::select(-cpg)))
+colnames(data_filtered_chr) = cpg
 res_sd <- apply(data_filtered_chr, 2, sd, na.rm = TRUE)
 cpg_list <- cpg[order(res_sd, decreasing = TRUE)]
 keep_list <- c()
