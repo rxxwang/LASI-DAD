@@ -72,7 +72,7 @@ for(i in 1:6){
     snp = "CpG",                     
     logp = FALSE,                  
     annotateTop = FALSE,           
-    ylim = c(0,ceiling(max(loading[,1:6])*50)/50),
+    ylim = c(floor(min(loading[,1:6])*50)/50,ceiling(max(loading[,1:6])*50)/50),
     ylab = paste0("PC", i, " loading"),
     annotatePval = 0.1,
     main = paste0("Manhattan Plot of PC", i, " loading")
