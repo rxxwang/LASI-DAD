@@ -2,6 +2,7 @@ library(glmmTMB)
 library(dplyr)
 library(stringr)
 
+sessionInfo()
 # lasi <- readRDS("/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250822_EWAS4/data/meth_pheno_data.1.RDS")
 lasi <- readRDS(snakemake@input[["data"]])
 cpgs <- str_subset(colnames(lasi), "_M$") %>% str_replace("_M$", "")

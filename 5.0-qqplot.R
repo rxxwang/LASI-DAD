@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 
+sessionInfo()
 model = paste0("model",snakemake@params[["model"]])
 biomarker = snakemake@params[["biomarker"]]
 

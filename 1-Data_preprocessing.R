@@ -54,9 +54,11 @@ colnames(Unmeth) <- c("sample", paste0(keep_cpgs, "_U"))
 print(1)
 
 #loads data frame phenos
+problem_id = 330565
 load(file=snakemake@input[["pheno"]])
 phenos = phenos[which(phenos$wave=='wave1'),]
 phenos$MedGenome_Sample_ID = as.numeric(phenos$MedGenome_Sample_ID)
+phenos = phenos %>% filter(MedGenome_Sample_ID != problem_id)
 colnames(phenos)[3] = "sample"
 phenos$r1smoken = as.factor(ifelse(phenos$r1smoken=='.m:Missing', NA, phenos$r1smoken))
 

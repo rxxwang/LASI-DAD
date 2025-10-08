@@ -7,7 +7,7 @@ variables = ["biomarker", "age", "gender", "smoke"]
 rule all:
   input:
     expand(
-      dir + "combined_qqplot/qqplot.{biomarker}.biomarker.png",
+      dir + "combined_qqplot3/qqplot.{biomarker}.biomarker.png",
       biomarker=BIOMARKERS
     )
 
@@ -28,9 +28,9 @@ rule process_data:
     pheno = phenotype_data_file, 
     wbc = blood_cell_data_file
   output: 
-    merged_data = expand(dir + "data/meth_pheno_data.{chunk}.RDS", chunk = range(1, nchunks+1)), 
-    cpg_list = dir + "cpg_list.RDS", 
-    manifest = dir + "manifest.RDS" 
+    merged_data = expand(dir + "data3/meth_pheno_data.{chunk}.RDS", chunk = range(1, nchunks+1)), 
+    cpg_list = dir + "cpg_list3.RDS", 
+    manifest = dir + "manifest3.RDS" 
   params: 
     nchunks = nchunks
   resources: 
@@ -42,9 +42,9 @@ rule process_data:
 # Run null model
 rule null_model:
   input: 
-    data = dir + "data/meth_pheno_data.{chunk}.RDS"
+    data = dir + "data3/meth_pheno_data.{chunk}.RDS"
   output: 
-    out = dir + "null_model/null_residuals.{chunk}.RDS"
+    out = dir + "null_model3/null_residuals.{chunk}.RDS"
   resources: 
     mem_mb = 10000,
     runtime = 2400 
@@ -54,22 +54,22 @@ rule null_model:
 # Combine residuals
 rule combine_res:
   input: 
-    res_chunk = expand(dir + "null_model/null_residuals.{chunk}.RDS", chunk = range(1, nchunks+1)),
-    manifest = dir + "manifest.RDS"
+    res_chunk = expand(dir + "null_model3/null_residuals.{chunk}.RDS", chunk = range(1, nchunks+1)),
+    manifest = dir + "manifest3.RDS"
   output: 
-    residuals = expand(dir + "null_model/null_residuals.chr{chr}.RDS", chr = range(1,23))
+    residuals = expand(dir + "null_model3/null_residuals.chr{chr}.RDS", chr = range(1,23))
   params: 
     nchunks = nchunks
   resources: 
-    mem_mb = 100000,
+    mem_mb = 70000,
     runtime = 300
   script: 
     "2.1-combine_res.R"
   
 # Filter correlation residuals
 rule cor_filter:
-  input: residuals = dir + "null_model/null_residuals.chr{chr}.RDS"
-  output: residuals_filter = dir + "residuals_chr/keep_cpg.{chr}.RDS"
+  input: residuals = dir + "null_model3/null_residuals.chr{chr}.RDS"
+  output: residuals_filter = dir + "residuals_chr3/keep_cpg.{chr}.RDS"
   params: cor_threshold = cor_threshold
   resources: 
     mem_mb = 7000,
@@ -78,14 +78,14 @@ rule cor_filter:
 
 # PCA + plotting + table
 rule PCA:
-  input: residuals_filter = expand(dir + "residuals_chr/keep_cpg.{chr}.RDS", chr = range(1, 23)),
-         phenos = dir + "data/meth_pheno_data.1.RDS",
-         manifest = dir + "manifest.RDS"
+  input: residuals_filter = expand(dir + "residuals_chr3/keep_cpg.{chr}.RDS", chr = range(1, 23)),
+         phenos = dir + "data3/meth_pheno_data.1.RDS",
+         manifest = dir + "manifest3.RDS"
   output: 
-    pca_result = dir + "pca_result.RDS",
-    scree_plot = dir + "plots/scree_plot.png",
-    cor_table = dir +"tables/cor_table_PC.txt",
-    pca_loading = dir + "plots/pca_loading.pdf"
+    pca_result = dir + "pca_result3.RDS",
+    scree_plot = dir + "plots/scree_plot3.png",
+    cor_table = dir +"tables/cor_table_PC3.txt",
+    pca_loading = dir + "plots/pca_loading3.pdf"
   resources: 
     mem_mb = 7000,
     runtime = 300
@@ -93,11 +93,11 @@ rule PCA:
 
 rule run_model:
   input:
-    data = dir + "data/meth_pheno_data.{chunk}.RDS",
-    manifest = dir + "manifest.RDS",
-    pca_result = dir + "pca_result.RDS"
+    data = dir + "data3/meth_pheno_data.{chunk}.RDS",
+    manifest = dir + "manifest3.RDS",
+    pca_result = dir + "pca_result3.RDS"
   output:
-    results = dir + "results_model{model}/results.model{model}.{biomarker}.{chunk}.RDS"
+    results = dir + "results3_model{model}/results.model{model}.{biomarker}.{chunk}.RDS"
   params:
     biomarker = lambda wc: wc.biomarker,
     model = lambda wc: wc.model
@@ -109,10 +109,10 @@ rule run_model:
   
 rule qqplot:
   input: 
-    data = expand(dir + "results_model{{model}}/results.model{{model}}.{{biomarker}}.{chunk}.RDS", chunk = range(1, nchunks+1))  
+    data = expand(dir + "results3_model{{model}}/results.model{{model}}.{{biomarker}}.{chunk}.RDS", chunk = range(1, nchunks+1))  
   output: 
-    combined_result = dir + "results/model{model}.{biomarker}.RDS",
-    qqplot = expand(dir + "qqplot/qqplot_model{{model}}.{{biomarker}}.{variable}.png", variable = variables)
+    combined_result = dir + "results3/model{model}.{biomarker}.RDS",
+    qqplot = expand(dir + "qqplot3/qqplot_model{{model}}.{{biomarker}}.{variable}.png", variable = variables)
   params:
     nchunks = nchunks,
     biomarker = lambda wc: wc.biomarker,
@@ -125,9 +125,9 @@ rule qqplot:
 
 rule combine_qqplot:
   input: 
-    qqplot = expand(dir + "qqplot/qqplot_model{model}.{{biomarker}}.biomarker.png", model = range(1, 7))
+    qqplot = expand(dir + "qqplot3/qqplot_model{model}.{{biomarker}}.biomarker.png", model = range(1, 7))
   output: 
-    combined_qqplot = dir + "combined_qqplot/qqplot.{biomarker}.biomarker.png"
+    combined_qqplot = dir + "combined_qqplot3/qqplot.{biomarker}.biomarker.png"
   params:
     biomarker = lambda wc: wc.biomarker,
   resources: 

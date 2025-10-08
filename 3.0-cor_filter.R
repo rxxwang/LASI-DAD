@@ -2,6 +2,7 @@ library(dplyr)
 library(psych)
 library(irlba)
 
+sessionInfo()
 data_filtered_chr <- readRDS(snakemake@input[["residuals"]])
 cpg = data_filtered_chr$cpg
 data_filtered_chr = t(as.matrix(data_filtered_chr %>% dplyr::select(-cpg)))

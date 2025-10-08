@@ -2,6 +2,7 @@ library(dplyr)
 library(stringr)
 library(glmmTMB)
 
+sessionInfo()
 for (i in 1:6) {
   source(sprintf("/net/orion/skardia_lab/clubhouse/research/projects/LASI/morrison_lab/20250822_EWAS4/LASI-DAD/4.%d-EWAS_model%d.R", i, i))
 }

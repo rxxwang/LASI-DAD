@@ -3,6 +3,7 @@ library(psych)
 library(irlba)
 library(xtable)
 
+sessionInfo()
 # Read all filtered residuals file
 results_list = list()
 for(i in 1:22){
