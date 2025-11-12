@@ -33,7 +33,7 @@ for(i in 1:4){
     geom_point(size = 1, alpha = 0.6) +
     geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
     labs(
-      title = paste0("QQ Plot of ",variable," P-values"),
+      title = paste0("QQ Plot of ",variable," P-values (p=", n,")"),
       x = expression(Expected~~-log[10](italic(p))),
       y = expression(Observed~~-log[10](italic(p)))
     ) +

@@ -7,9 +7,14 @@ variables = ["biomarker", "age", "gender", "smoke"]
 rule all:
   input:
     expand(
-      dir + "combined_qqplot3/qqplot.{biomarker}.biomarker.png",
-      biomarker=BIOMARKERS
+      dir + "plots/upset_model{model}.png",
+      model=range(1,3)
+    ),
+    expand(
+      dir + "qqplot3/qqplot_model{model}.fillin.nan.png",
+      model=range(1,3)
     )
+    
 
 biomarker_data_file = "/net/orion/skardia_lab/clubhouse/research/projects/LASI/Alzheimers_Disease/Updated LASI-DAD AD biomarker data/lasidad_w12adbio_final_methylID.dta"
 manifest_file = '/net/orion/skardia_lab/clubhouse/research/projects/LASI/Methylation_Nov14_2024/Scott_QC_test/Modified_EPICv2_manifest_in_TJ.Peters_BMCgenomics_2024.rda'
@@ -91,7 +96,52 @@ rule PCA:
     runtime = 300
   script: "3.5-PCA.R"
 
-rule run_model:
+# rule run_model:
+#   input:
+#     data = dir + "data3/meth_pheno_data.{chunk}.RDS",
+#     manifest = dir + "manifest3.RDS",
+#     pca_result = dir + "pca_result3.RDS"
+#   output:
+#     results = dir + "results3_model{model}/results.model{model}.{biomarker}.{chunk}.RDS"
+#   params:
+#     biomarker = lambda wc: wc.biomarker,
+#     model = lambda wc: wc.model
+#   resources: 
+#     mem_mb = 10000,   # 10 GB
+#     runtime = 2400    # 40 hours
+#   script:
+#     "4-EWAS_model.R"
+#   
+# rule qqplot:
+#   input: 
+#     data = expand(dir + "results3_model{{model}}/results.model{{model}}.{{biomarker}}.{chunk}.RDS", chunk = range(1, nchunks+1))  
+#   output: 
+#     combined_result = dir + "results3/model{model}.{biomarker}.RDS",
+#     qqplot = expand(dir + "qqplot3/qqplot_model{{model}}.{{biomarker}}.{variable}.png", variable = variables)
+#   params:
+#     nchunks = nchunks,
+#     biomarker = lambda wc: wc.biomarker,
+#     model = lambda wc: wc.model
+#   resources: 
+#     mem_mb = 20000,   # 20 GB
+#     runtime = 300    # 5 hours
+#   script:
+#     "5.0-qqplot.R"
+# 
+# rule combine_qqplot:
+#   input: 
+#     qqplot = expand(dir + "qqplot3/qqplot_model{model}.{{biomarker}}.biomarker.png", model = range(1, 7))
+#   output: 
+#     combined_qqplot = dir + "combined_qqplot3/qqplot.{biomarker}.biomarker.png"
+#   params:
+#     biomarker = lambda wc: wc.biomarker,
+#   resources: 
+#     mem_mb = 5000,   # 20 GB
+#     runtime = 60    # 5 hours
+#   script:
+#     "5.2-qqplot_combine.R"
+
+rule run_model1_nr:
   input:
     data = dir + "data3/meth_pheno_data.{chunk}.RDS",
     manifest = dir + "manifest3.RDS",
@@ -105,14 +155,13 @@ rule run_model:
     mem_mb = 10000,   # 10 GB
     runtime = 2400    # 40 hours
   script:
-    "4-EWAS_model.R"
-  
-rule qqplot:
+    "4.0-EWAS_model_nr.R"
+    
+rule combine_results_nr:
   input: 
     data = expand(dir + "results3_model{{model}}/results.model{{model}}.{{biomarker}}.{chunk}.RDS", chunk = range(1, nchunks+1))  
   output: 
-    combined_result = dir + "results3/model{model}.{biomarker}.RDS",
-    qqplot = expand(dir + "qqplot3/qqplot_model{{model}}.{{biomarker}}.{variable}.png", variable = variables)
+    combined_result = dir + "results3/model{model}.{biomarker}.RDS"
   params:
     nchunks = nchunks,
     biomarker = lambda wc: wc.biomarker,
@@ -121,17 +170,55 @@ rule qqplot:
     mem_mb = 20000,   # 20 GB
     runtime = 300    # 5 hours
   script:
-    "5.0-qqplot.R"
+    "6.0-combine_results_nr.R"
+    
+rule fillin_nan:
+  input: 
+    model10_data = dir + "results3/model{model}0.{biomarker}.RDS",
+    model11_data = dir + "results3/model{model}1.{biomarker}.RDS"
+  output: 
+    fillin_nan_result = dir + "results3_fillin_nan/model{model}.fillin.nan.{biomarker}.RDS",
+    qqplot = dir + "qqplot3/qqplot_model{model}.fillin.nan.{biomarker}.png"
+  params:
+    biomarker = lambda wc: wc.biomarker
+  resources: 
+    mem_mb = 20000,   # 20 GB
+    runtime = 300    # 5 hours
+  script:
+    "6.1-fillin_nan.R"
+
+rule manhattan:
+  input: 
+    data = dir + "results3_fillin_nan/model{model}.fillin.nan.{biomarker}.RDS"
+  output: 
+    manhattan = dir + "plots/manhattan.model{model}.{biomarker}.png"
+  params:
+    biomarker = lambda wc: wc.biomarker
+  resources: 
+    mem_mb = 20000,   # 20 GB
+    runtime = 300    # 5 hours
+  script:
+    "6.2-manhattan.R"
 
 rule combine_qqplot:
-  input: 
-    qqplot = expand(dir + "qqplot3/qqplot_model{model}.{{biomarker}}.biomarker.png", model = range(1, 7))
-  output: 
-    combined_qqplot = dir + "combined_qqplot3/qqplot.{biomarker}.biomarker.png"
-  params:
-    biomarker = lambda wc: wc.biomarker,
-  resources: 
-    mem_mb = 5000,   # 20 GB
-    runtime = 60    # 5 hours
+  input:
+    qqplot = expand( dir + "qqplot3/qqplot_model{{model}}.fillin.nan.{biomarker}.png", biomarker = BIOMARKERS)
+  output:
+    combined_qqplot = dir + "qqplot3/qqplot_model{model}.fillin.nan.png"
+  resources:
+    mem_mb = 20000,   # 20 GB
+    runtime = 300    # 5 hours
   script:
-    "5.2-qqplot_combine.R"
+    "6.3-qqplot_combine.R"
+
+rule heatmap_upset:
+  input:
+    data = expand(dir + "results3_fillin_nan/model{{model}}.fillin.nan.{biomarker}.RDS", biomarker = BIOMARKERS)
+  output:
+    heatmap = dir + "plots/heatmap_model{model}.pdf",
+    upset = dir + "plots/upset_model{model}.pdf"
+  resources:
+    mem_mb = 20000,   # 20 GB
+    runtime = 300    # 5 hours
+  script:
+    "6.4-heatmap_upset.R"
