@@ -1,6 +1,7 @@
 snakemake \
    --keep-going \
-   --jobs 500 \
+   --rerun-incomplete \
+   --jobs 2000 \
    --max-jobs-per-second 5 \
    --latency-wait 60 \
    --executor slurm \

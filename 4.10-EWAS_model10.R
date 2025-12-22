@@ -13,18 +13,20 @@ model10 <- function(model, lasi, manifest, biomarker, pca_result, output_name){
   n = length(cpgs)
   results = matrix(0, nrow = n, ncol = 23)
   lasi$abeta_ratio = lasi$w1abeta42_final/lasi$w1abeta40_final
+  lasi$abeta_ratio_res = lasi$w1abeta42_final_res-lasi$w1abeta40_final_res
   
   for(i in 1:n) {
     Mname <- paste0(cpgs[i], "_M")
     Uname <- paste0(cpgs[i], "_U")
-    formula <- as.formula(paste0(Mname, "~ log(", biomarker, ") + log(r1hagey) + ragender + smoke + r1hmbmi + CD8T + CD4T + NK + Bcell + Mono + batch + (1 | Plate) + (1 | row) + offset(log(m_u))"))
+    biomarker_res = paste0(biomarker, "_res")
+    formula <- as.formula(paste0(Mname, "~ ", biomarker, "_res + log(r1hagey) + ragender + smoke + r1hmbmi + CD8T + CD4T + NK + Bcell + Mono + batch + (1 | Plate) + (1 | row) + offset(log(m_u))"))
     
     temp_meth = filter(lasi, !is.na((!!Mname)) & !is.na((!!Uname))) %>%
       mutate(
         row = factor(as.numeric(substr(Sample_Section, 3, 3))),
         m_u = !!sym(Mname) + !!sym(Uname)
       ) %>% 
-      dplyr::select(!!biomarker, !!Mname, !!Uname, r1hagey, ragender, smoke, r1hmbmi, CD8T, CD4T, NK, Bcell, Mono, batch, Plate, row, m_u) %>%
+      dplyr::select(!!biomarker_res, !!Mname, !!Uname, r1hagey, ragender, smoke, r1hmbmi, CD8T, CD4T, NK, Bcell, Mono, batch, Plate, row, m_u) %>%
       filter(if_all(everything(), ~ !is.na(.)))
     
     MODEL = glmmTMB(

@@ -13,11 +13,13 @@ model21 <- function(model, lasi, manifest, biomarker, pca_result, output_name){
   n = length(cpgs)
   results = matrix(0, nrow = n, ncol = 22)
   lasi$abeta_ratio = lasi$w1abeta42_final/lasi$w1abeta40_final
+  lasi$abeta_ratio_res = lasi$w1abeta42_final_res-lasi$w1abeta40_final_res
   
   for(i in 1:n) {
     Mname <- paste0(cpgs[i], "_M")
     Uname <- paste0(cpgs[i], "_U")
-    formula <- as.formula(paste0(Mname, "~ log(", biomarker, ") + log(r1hagey) + ragender + smoke + r1hmbmi + CD8T + CD4T + NK + Bcell + Mono + PC1 + PC2 + PC3 + PC4 + batch + (1 | Plate)+ offset(log(m_u))"))
+    biomarker_res = paste0(biomarker, "_res")
+    formula <- as.formula(paste0(Mname, "~ ", biomarker, "_res + log(r1hagey) + ragender + smoke + r1hmbmi + CD8T + CD4T + NK + Bcell + Mono + PC1 + PC2 + PC3 + PC4 + batch + (1 | Plate)+ offset(log(m_u))"))
     
     temp_meth = filter(lasi, !is.na((!!Mname)) & !is.na((!!Uname))) %>%
       mutate(
@@ -25,7 +27,7 @@ model21 <- function(model, lasi, manifest, biomarker, pca_result, output_name){
         m_u = !!sym(Mname) + !!sym(Uname),
         PC1 = scale(pca_result$x[,1]), PC2 = scale(pca_result$x[,2]), PC3 = scale(pca_result$x[,3]), PC4 = scale(pca_result$x[,4])
       ) %>% 
-      dplyr::select(!!biomarker, !!Mname, !!Uname, r1hagey, ragender, smoke, r1hmbmi, CD8T, CD4T, NK, Bcell, Mono, batch, Plate, row, m_u, PC1, PC2, PC3, PC4) %>%
+      dplyr::select(!!biomarker_res, !!Mname, !!Uname, r1hagey, ragender, smoke, r1hmbmi, CD8T, CD4T, NK, Bcell, Mono, batch, Plate, row, m_u, PC1, PC2, PC3, PC4) %>%
       filter(if_all(everything(), ~ !is.na(.)))
     
     MODEL = glmmTMB(
